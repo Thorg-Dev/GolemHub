@@ -1,0 +1,28 @@
+services:
+  service:
+    build: .
+    command:
+      cargo run
+    ports:
+      - "5050:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+  db:
+    image: postgres
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready" ]
+      interval: 1s
+      timeout: 5s
+      retries: 5
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+    user: postgres
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8182:8080
+    depends_on:
+      - db

@@ -1,0 +1,3 @@
+FROM postgres
+WORKDIR container_dir/
+COPY dev_db/generators/GolemHub.sql /docker-entrypoint-initdb.d
