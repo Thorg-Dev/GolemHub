@@ -1,14 +1,12 @@
 mod data_types;
 mod db_connection;
 
-
-use sqlx::{Pool, Postgres};
-use actix_web::{get, web, App, HttpResponse, HttpServer, Responder};
 use actix_web::middleware::Logger;
+use actix_web::{get, web, App, HttpResponse, HttpServer, Responder};
+use actix_web::http::header::ContentType;
+use sqlx::{Pool, Postgres};
 
-//TODO GET basic routing
-//TODO User schema
-//TODO Image schema
+use serde::Serialize;
 
 #[get("/")]
 async fn hello() -> impl Responder {
@@ -17,9 +15,16 @@ async fn hello() -> impl Responder {
 
 #[get("/image/{id}")]
 async fn image(db_pool: web::Data<Pool<Postgres>>, path: web::Path<u32>) -> impl Responder {
-    db_connection::retrieve_image_data(path.into_inner(), &db_pool).await.expect("asd");
+    let image = db_connection::retrieve_image_data(path.into_inner(), &db_pool)
+        .await
+        .expect("asd");
 
-    HttpResponse::Ok().body("response")
+    let body = serde_json::to_string(&image).unwrap();
+
+    // Create response and set content type
+    HttpResponse::Ok()
+        .content_type(ContentType::json())
+        .body(body)
 }
 
 #[actix_web::main]
@@ -35,16 +40,10 @@ async fn main() -> anyhow::Result<()> {
             .service(image)
             .wrap(Logger::new("%a %{User-Agent}i"))
     })
-        .bind(("127.0.0.1", 8080))
-        .expect("asd")
-        .run()
-        .await?;
+    .bind(("127.0.0.1", 8080))
+    .expect("asd")
+    .run()
+    .await?;
 
     Ok(())
 }
-
-//Jaki runtime asynca?
-//Jakie zmienne do pól?
-//ID usera githuba?
-//Download link?
-//Dane do bazy w envie?

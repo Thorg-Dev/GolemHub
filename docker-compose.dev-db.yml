@@ -9,11 +9,11 @@ services:
         POSTGRES_PASSWORD: postgres
         POSTGRES_USER: postgres
     user: postgres
+    ports:
+      - 8008:5432
     build:
       context: .
       dockerfile: dev_db/dockerfile_with_dummy_data
-    volumes:
-      - ./container_data/dev_db:/
   adminer:
     extends:
       file: common-services.yml

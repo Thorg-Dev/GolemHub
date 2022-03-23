@@ -1,7 +1,7 @@
-#[derive(sqlx::FromRow)]
+#[derive(sqlx::FromRow, serde::Serialize)]
 pub struct GolemImage {
-    id: u32,
-    name: String,
-    description: String,
-    downloads_number: u32,
+    Id: i32,
+    Name: String,
+    Description: String,
+    User: i32,
 }
