@@ -1,17 +1,14 @@
 mod data_types;
 mod db_connection;
 
-use anyhow::Result;
-
+use crate::data_types::{ProjectCreationRequest, ProjectGetQuery, ProjectResponse};
 use actix_web::http::header::ContentType;
 use actix_web::middleware::Logger;
 use actix_web::web::Query;
 use actix_web::{delete, get, patch, post, web, App, HttpResponse, HttpServer, Responder};
-use sqlx::{Pool, Postgres};
-
+use anyhow::Result;
 use serde::Serialize;
-
-use crate::data_types::{ProjectCreationRequest, ProjectGetQuery, ProjectResponse};
+use sqlx::{Pool, Postgres};
 
 #[get("/meta/hash/{hash}")]
 async fn image_hash(db_pool: web::Data<Pool<Postgres>>, path: web::Path<u32>) -> impl Responder {
@@ -76,7 +73,6 @@ async fn main() -> anyhow::Result<()> {
     HttpServer::new(move || {
         App::new()
             .app_data(web::Data::new(db.clone()))
-            .service(hello)
             .service(image_hash)
             .service(add_project)
             .service(get_projects)

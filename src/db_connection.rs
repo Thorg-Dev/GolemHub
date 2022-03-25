@@ -1,12 +1,10 @@
+use crate::data_types::ProjectResponse;
+use crate::ProjectCreationRequest;
 use anyhow::Result;
 use futures_util::stream::TryStreamExt;
 use log::info;
-
 use sqlx::postgres::PgPoolOptions;
 use sqlx::{Pool, Postgres, Row};
-
-use crate::data_types::ProjectResponse;
-use crate::ProjectCreationRequest;
 use std::env;
 
 pub async fn create_db_connection() -> Result<Pool<Postgres>> {
@@ -37,10 +35,13 @@ pub async fn get_projects(
 ) -> Result<Vec<ProjectResponse>> {
     let projects = sqlx::query_as::<_, ProjectResponse>(
         r#"SELECT id, name, icon, homepage, developer, images
-	    FROM public."Projects";"#,
+	    FROM public."Projects"
+	    LIMIT $1 OFFSET $2;"#,
     )
-    .fetch_all(pool)
-    .await?;
+        .bind(limit)
+        .bind(offset)
+        .fetch_all(pool)
+        .await?;
 
     Ok(projects)
 }
