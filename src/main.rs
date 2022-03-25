@@ -3,34 +3,32 @@ mod db_connection;
 
 use anyhow::Result;
 
-use actix_web::middleware::Logger;
-use actix_web::{get, post, patch, delete, web, App, HttpResponse, HttpServer, Responder};
 use actix_web::http::header::ContentType;
+use actix_web::middleware::Logger;
 use actix_web::web::Query;
+use actix_web::{delete, get, patch, post, web, App, HttpResponse, HttpServer, Responder};
 use sqlx::{Pool, Postgres};
 
 use serde::Serialize;
 
-
 use crate::data_types::{ProjectCreationRequest, ProjectGetQuery, ProjectResponse};
-
-#[get("/")]
-async fn hello() -> impl Responder {
-    HttpResponse::Ok().body("Hello world!")
-}
 
 #[get("/meta/hash/{hash}")]
 async fn image_hash(db_pool: web::Data<Pool<Postgres>>, path: web::Path<u32>) -> impl Responder {
-    let project_response = db_connection::retrieve_image_data(path.into_inner(), &db_pool)
-        .await;
+    let project_response = db_connection::retrieve_image_data(path.into_inner(), &db_pool).await;
 
-    if project_response.is_err() { return HttpResponse::Accepted().body("Image not found"); }
+    if project_response.is_err() {
+        return HttpResponse::Accepted().body("Image not found");
+    }
 
     HttpResponse::Ok().json(project_response.unwrap())
 }
 
 #[get("/api/projects")]
-async fn get_projects(db_pool: web::Data<Pool<Postgres>>, info: Query<ProjectGetQuery>) -> impl Responder {
+async fn get_projects(
+    db_pool: web::Data<Pool<Postgres>>,
+    info: Query<ProjectGetQuery>,
+) -> impl Responder {
     let found_projects = db_connection::get_projects(info.offset, info.limit, &db_pool).await;
 
     match found_projects {
@@ -40,7 +38,10 @@ async fn get_projects(db_pool: web::Data<Pool<Postgres>>, info: Query<ProjectGet
 }
 
 #[post("api/projects")]
-async fn add_project(db_pool: web::Data<Pool<Postgres>>, request : web::Json<ProjectCreationRequest>) -> impl Responder {
+async fn add_project(
+    db_pool: web::Data<Pool<Postgres>>,
+    request: web::Json<ProjectCreationRequest>,
+) -> impl Responder {
     //TODO validate request?
 
     let added_project = db_connection::add_project(request.into_inner(), &db_pool).await;

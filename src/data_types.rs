@@ -17,12 +17,14 @@ pub struct ProjectCreationRequest {
     pub images: Vec<String>,
 }
 
-fn default_limit() -> u32 { 10 }
+fn default_limit() -> u32 {
+    10
+}
 
 #[derive(serde::Deserialize)]
 pub struct ProjectGetQuery {
     #[serde(default)]
-    pub offset : u32,
+    pub offset: u32,
     #[serde(default = "default_limit")]
-    pub limit : u32,
+    pub limit: u32,
 }
