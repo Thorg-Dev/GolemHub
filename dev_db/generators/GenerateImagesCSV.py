@@ -13,6 +13,7 @@ output = ""
 for index in range(100):
     name = ""
     ipsum = ""
+    hash = ""
 
     for letter_num in range(8):
         name += random.choice(string.ascii_letters)
@@ -20,7 +21,13 @@ for index in range(100):
     for num in range(2):
         ipsum += random.choice(ipsums)
 
-    format_str = '%s, %i, "%s", %i\n' % (name, index, ipsum, random.randint(0, 50))
+    for num in range(256):
+        hash += random.choice(string.ascii_letters)
+
+    homepage = "https://drugs-on.golem.network"
+
+    #hash(ID), name, icon, homepage, userID
+    format_str = '%s, %s, %s, "%s", %i\n' % (hash, name, "", homepage, random.randint(0, 50))
     output += format_str
 
 f = open("Images.csv", "w")
