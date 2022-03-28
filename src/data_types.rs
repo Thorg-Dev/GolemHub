@@ -28,3 +28,14 @@ pub struct ProjectGetQuery {
     #[serde(default = "default_limit")]
     pub limit: u32,
 }
+
+#[derive(serde::Deserialize, Debug)]
+pub struct ProjectModificationRequest {
+    pub id: u32,
+    pub name: Option<String>,
+    pub icon: Option<String>,
+    pub homepage: Option<String>,
+    pub developer: Option<String>,
+    pub add_image: Option<Vec<String>>,
+    pub del_image: Option<Vec<String>>,
+}

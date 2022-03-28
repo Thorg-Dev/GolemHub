@@ -1,5 +1,5 @@
 use crate::data_types::ProjectResponse;
-use crate::ProjectCreationRequest;
+use crate::{ProjectCreationRequest, ProjectModificationRequest};
 use anyhow::Result;
 use futures_util::stream::TryStreamExt;
 use log::info;
@@ -38,10 +38,10 @@ pub async fn get_projects(
 	    FROM public."Projects"
 	    LIMIT $1 OFFSET $2;"#,
     )
-        .bind(limit)
-        .bind(offset)
-        .fetch_all(pool)
-        .await?;
+    .bind(limit)
+    .bind(offset)
+    .fetch_all(pool)
+    .await?;
 
     Ok(projects)
 }
@@ -65,6 +65,123 @@ pub async fn add_project(
     .await?;
 
     Ok(project_data)
+}
+
+pub async fn modify_project(
+    request: ProjectModificationRequest,
+    pool: &Pool<Postgres>,
+) -> Result<()> {
+    info!("{:?}", request);
+
+    let mut queries = Vec::new();
+
+    if request.name.is_some() {
+        let modify_query = sqlx::query(
+            r#"
+        UPDATE public."Projects"
+        SET
+            name = $1
+        WHERE
+            id = $2
+        "#,
+        )
+        .bind(request.name.unwrap())
+        .bind(request.id);
+
+        queries.push(modify_query.execute(pool));
+    }
+
+    if request.icon.is_some() {
+        let modify_query = sqlx::query(
+            r#"
+        UPDATE public."Projects"
+        SET
+            icon = $1
+        WHERE
+            id = $2
+        "#,
+        )
+        .bind(request.icon.unwrap())
+        .bind(request.id);
+
+        queries.push(modify_query.execute(pool));
+    }
+
+    if request.homepage.is_some() {
+        let modify_query = sqlx::query(
+            r#"
+        UPDATE public."Projects"
+        SET
+            homepage = $1
+        WHERE
+            id = $2
+        "#,
+        )
+        .bind(request.homepage.unwrap())
+        .bind(request.id);
+
+        queries.push(modify_query.execute(pool));
+    }
+
+    if request.developer.is_some() {
+        let modify_query = sqlx::query(
+            r#"
+        UPDATE public."Projects"
+        SET
+            developer = $1
+        WHERE
+            id = $2
+        "#,
+        )
+        .bind(request.developer.unwrap())
+        .bind(request.id);
+
+        queries.push(modify_query.execute(pool));
+    }
+
+    if request.add_image.is_some() {
+        for image_hash in request.add_image.unwrap() {
+            let modify_query = sqlx::query(
+                r#"
+                    UPDATE public."Projects"
+                    SET
+                        images = array_append(images, $1)
+                    WHERE
+                        id = $2
+                    "#,
+            )
+            .bind(image_hash)
+            .bind(request.id);
+
+            queries.push(modify_query.execute(pool));
+        }
+    }
+
+    if request.del_image.is_some() {
+        for image_hash in request.del_image.unwrap() {
+            let modify_query = sqlx::query(
+                r#"
+                    UPDATE public."Projects"
+                    SET
+                        images = array_remove(images, $1)
+                    WHERE
+                        id = $2
+                    "#,
+            )
+            .bind(image_hash)
+            .bind(request.id);
+
+            queries.push(modify_query.execute(pool));
+        }
+    }
+
+
+
+    for query_result in queries {
+        query_result.await;
+    }
+
+    Ok(())
 }
 
 pub async fn retrieve_image_data(id: u32, pool: &Pool<Postgres>) -> Result<ProjectResponse> {

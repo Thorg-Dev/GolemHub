@@ -1,7 +1,9 @@
 mod data_types;
 mod db_connection;
 
-use crate::data_types::{ProjectCreationRequest, ProjectGetQuery, ProjectResponse};
+use crate::data_types::{
+    ProjectCreationRequest, ProjectGetQuery, ProjectModificationRequest, ProjectResponse,
+};
 use actix_web::http::header::ContentType;
 use actix_web::middleware::Logger;
 use actix_web::web::Query;
@@ -11,7 +13,7 @@ use serde::Serialize;
 use sqlx::{Pool, Postgres};
 
 #[get("/meta/hash/{hash}")]
-async fn image_hash(db_pool: web::Data<Pool<Postgres>>, path: web::Path<u32>) -> impl Responder {
+async fn get_image(db_pool: web::Data<Pool<Postgres>>, path: web::Path<u32>) -> impl Responder {
     let project_response = db_connection::retrieve_image_data(path.into_inner(), &db_pool).await;
 
     if project_response.is_err() {
@@ -49,9 +51,14 @@ async fn add_project(
     }
 }
 
-#[patch("api/projects/{id}")]
-async fn modify_project() -> impl Responder {
-    HttpResponse::Ok().body("Hello world!")
+#[patch("api/projects")]
+async fn modify_project(
+    db_pool: web::Data<Pool<Postgres>>,
+    request: web::Json<ProjectModificationRequest>,
+) -> impl Responder {
+    let result = db_connection::modify_project(request.into_inner(), &db_pool).await;
+
+    HttpResponse::Ok().body("Project modified")
 }
 
 #[delete("api/projects/{id}")]
@@ -73,9 +80,10 @@ async fn main() -> anyhow::Result<()> {
     HttpServer::new(move || {
         App::new()
             .app_data(web::Data::new(db.clone()))
-            .service(image_hash)
+            .service(get_image)
             .service(add_project)
             .service(get_projects)
+            .service(modify_project)
             .wrap(Logger::new("%a %{User-Agent}i"))
     })
     .bind(("127.0.0.1", 8080))
