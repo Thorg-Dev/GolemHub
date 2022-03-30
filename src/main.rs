@@ -1,16 +1,19 @@
 mod data_types;
 mod db_connection;
 
-use crate::data_types::{
-    ProjectCreationRequest, ProjectGetQuery, ProjectModificationRequest, ProjectResponse,
-};
-use actix_web::http::header::ContentType;
+use crate::data_types::{ProjectCreationRequest, ProjectGetQuery, ProjectModificationRequest};
+use actix_multipart::Multipart;
 use actix_web::middleware::Logger;
-use actix_web::web::Query;
+use actix_web::web::{Buf, Bytes, Query};
 use actix_web::{delete, get, patch, post, web, App, HttpResponse, HttpServer, Responder};
 use anyhow::Result;
+use futures_util::{StreamExt, TryStreamExt};
+use image::codecs::png;
+use image::io::Reader as ImageReader;
+use log::info;
 use serde::Serialize;
 use sqlx::{Pool, Postgres};
+use std::io::Cursor;
 
 #[get("/meta/hash/{hash}")]
 async fn get_image(db_pool: web::Data<Pool<Postgres>>, path: web::Path<u32>) -> impl Responder {
@@ -66,8 +69,52 @@ async fn delete_project() -> impl Responder {
     HttpResponse::Ok().body("Hello world!")
 }
 
-#[post("api/icon")]
-async fn upload_icon() -> impl Responder {
+#[post("api/icon/{id}")]
+async fn upload_icon(
+    path: web::Path<u32>,
+    mut payload: Multipart,
+    db_pool: web::Data<Pool<Postgres>>,
+) -> impl Responder {
+    let project_id = path.into_inner();
+
+    while let Ok(Some(mut field)) = payload.try_next().await {
+        let content_type = field.content_disposition();
+        let filename = content_type.get_filename().unwrap();
+        let filepath = format!(".{}", filename);
+        //info!("Found file {}", filepath);
+
+        // // File::create is blocking operation, use threadpool
+        // let mut f = web::block(|| std::fs::File::create(filepath))
+        //     .await
+        //     .unwrap();
+
+        // Field in turn is stream of *Bytes* object
+        while let Some(chunk) = field.next().await {
+            let data = chunk.unwrap();
+            let data2 = Bytes::copy_from_slice(data.as_ref());
+
+            // TODO reenable png check
+            // let image_reader = ImageReader::new(Cursor::new(data));
+            //
+            // let potential_image = image_reader.with_guessed_format();
+            //
+            // let image = match potential_image {
+            //     Ok(format) => format,
+            //     Err(e) => return HttpResponse::Ok().body(e.to_string()),
+            // };
+
+            //.decode().unwrap();
+
+            db_connection::add_icon_to_project(data.as_ref(), project_id, &db_pool).await;
+
+            //info!("{:?}", potential_image);
+
+            // // filesystem operations are blocking, we have to use threadpool
+            // f = web::block(move || f.write_all(&data).map(|_| f))
+            //     .await
+            //     .unwrap();
+        }
+    }
     HttpResponse::Ok().body("Hello world!")
 }
 
@@ -84,6 +131,7 @@ async fn main() -> anyhow::Result<()> {
             .service(add_project)
             .service(get_projects)
             .service(modify_project)
+            .service(upload_icon)
             .wrap(Logger::new("%a %{User-Agent}i"))
     })
     .bind(("127.0.0.1", 8080))

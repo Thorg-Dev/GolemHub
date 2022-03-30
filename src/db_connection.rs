@@ -1,11 +1,11 @@
 use crate::data_types::ProjectResponse;
 use crate::{ProjectCreationRequest, ProjectModificationRequest};
 use anyhow::Result;
-use futures_util::stream::TryStreamExt;
 use log::info;
 use sqlx::postgres::PgPoolOptions;
-use sqlx::{Pool, Postgres, Row};
+use sqlx::{Pool, Postgres};
 use std::env;
+use std::io::Bytes;
 
 pub async fn create_db_connection() -> Result<Pool<Postgres>> {
     let username = env::var("DB_USER").unwrap_or(String::from("postgres"));
@@ -67,12 +67,45 @@ pub async fn add_project(
     Ok(project_data)
 }
 
+pub async fn add_icon_to_project(
+    png_bytes: &[u8],
+    project_id: u32,
+    pool: &Pool<Postgres>,
+) -> Result<()> {
+    sqlx::query(
+        r#"
+        UPDATE public."Projects"
+        SET
+            icon = $1
+        WHERE
+            id = $2
+        "#,
+    )
+    .bind(png_bytes)
+    .bind(project_id)
+    .execute(pool)
+    .await?;
+
+    Ok(())
+}
+
+pub async fn delete_project(request: u32, pool: &Pool<Postgres>) -> Result<()> {
+    sqlx::query(
+        r#"DELETE FROM public."Projects"(
+        WHERE
+            id=$1;"#,
+    )
+    .bind(request)
+    .execute(pool)
+    .await?;
+
+    Ok(())
+}
+
 pub async fn modify_project(
     request: ProjectModificationRequest,
     pool: &Pool<Postgres>,
 ) -> Result<()> {
-    info!("{:?}", request);
-
     let mut queries = Vec::new();
 
     if request.name.is_some() {
@@ -174,8 +207,6 @@ pub async fn modify_project(
             queries.push(modify_query.execute(pool));
         }
     }
-
-
 
     for query_result in queries {
         query_result.await;
