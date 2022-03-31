@@ -59,7 +59,7 @@ async fn modify_project(
 
     match result {
         Ok(_) => HttpResponse::Ok().body("Project modified"),
-        Err(e) => HttpResponse::Accepted().body("failed to modify project"),
+        Err(_) => HttpResponse::Accepted().body("failed to modify project"),
     }
 }
 
@@ -101,14 +101,17 @@ async fn upload_icon(
             if image.format().is_none() {
                 return HttpResponse::Accepted().body("Provided file is not png");
             }
-            let result = db_connection::add_icon_to_project(data.as_ref(), project_id, &db_pool).await;
+            let result =
+                db_connection::add_icon_to_project(data.as_ref(), project_id, &db_pool).await;
 
             match result {
-                Ok(_) => HttpResponse::Accepted().body(format!("Icon uploaded to project with id {}", project_id)),
-                Err(e) => HttpResponse::Ok().body(e.to_string()),
+                Ok(_) => return HttpResponse::Ok()
+                    .body(format!("Icon uploaded to project with id {}", project_id)),
+                Err(e) => return HttpResponse::Accepted().body(e.to_string()),
             }
         }
     }
+    HttpResponse::Accepted().body("Failed to upload icon")
 }
 
 #[tokio::main]
