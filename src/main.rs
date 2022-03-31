@@ -92,27 +92,19 @@ async fn upload_icon(
         while let Some(chunk) = field.next().await {
             let data = chunk.unwrap();
             let data2 = Bytes::copy_from_slice(data.as_ref());
+            let image_reader = ImageReader::new(Cursor::new(data2));
 
-            // TODO reenable png check
-            // let image_reader = ImageReader::new(Cursor::new(data));
-            //
-            // let potential_image = image_reader.with_guessed_format();
-            //
-            // let image = match potential_image {
-            //     Ok(format) => format,
-            //     Err(e) => return HttpResponse::Ok().body(e.to_string()),
-            // };
+            let potential_image = image_reader.with_guessed_format();
 
-            //.decode().unwrap();
+            let image = match potential_image {
+                Ok(format) => format,
+                Err(e) => return HttpResponse::Ok().body(e.to_string()),
+            };
 
+            if image.format().is_none() {
+                return HttpResponse::Ok().body("Provided file is not png");
+            }
             db_connection::add_icon_to_project(data.as_ref(), project_id, &db_pool).await;
-
-            //info!("{:?}", potential_image);
-
-            // // filesystem operations are blocking, we have to use threadpool
-            // f = web::block(move || f.write_all(&data).map(|_| f))
-            //     .await
-            //     .unwrap();
         }
     }
     HttpResponse::Ok().body("Hello world!")
