@@ -4,14 +4,10 @@ mod db_connection;
 use crate::data_types::{ProjectCreationRequest, ProjectGetQuery, ProjectModificationRequest};
 use actix_multipart::Multipart;
 use actix_web::middleware::Logger;
-use actix_web::web::{Buf, Bytes, Query};
+use actix_web::web::{Bytes, Query};
 use actix_web::{delete, get, patch, post, web, App, HttpResponse, HttpServer, Responder};
-use anyhow::Result;
 use futures_util::{StreamExt, TryStreamExt};
-use image::codecs::png;
 use image::io::Reader as ImageReader;
-use log::info;
-use serde::Serialize;
 use sqlx::{Pool, Postgres};
 use std::io::Cursor;
 
@@ -61,12 +57,23 @@ async fn modify_project(
 ) -> impl Responder {
     let result = db_connection::modify_project(request.into_inner(), &db_pool).await;
 
-    HttpResponse::Ok().body("Project modified")
+    match result {
+        Ok(_) => HttpResponse::Ok().body("Project modified"),
+        Err(e) => HttpResponse::Accepted().body("failed to modify project"),
+    }
 }
 
 #[delete("api/projects/{id}")]
-async fn delete_project() -> impl Responder {
-    HttpResponse::Ok().body("Hello world!")
+async fn delete_project(
+    path: web::Path<u32>,
+    db_pool: web::Data<Pool<Postgres>>,
+) -> impl Responder {
+    let result = db_connection::delete_project(path.into_inner(), &db_pool).await;
+
+    match result {
+        Ok(_) => HttpResponse::Ok().body("Delete succesful"),
+        Err(e) => HttpResponse::Accepted().body(e.to_string()),
+    }
 }
 
 #[post("api/icon/{id}")]
@@ -78,16 +85,6 @@ async fn upload_icon(
     let project_id = path.into_inner();
 
     while let Ok(Some(mut field)) = payload.try_next().await {
-        let content_type = field.content_disposition();
-        let filename = content_type.get_filename().unwrap();
-        let filepath = format!(".{}", filename);
-        //info!("Found file {}", filepath);
-
-        // // File::create is blocking operation, use threadpool
-        // let mut f = web::block(|| std::fs::File::create(filepath))
-        //     .await
-        //     .unwrap();
-
         // Field in turn is stream of *Bytes* object
         while let Some(chunk) = field.next().await {
             let data = chunk.unwrap();
@@ -102,12 +99,16 @@ async fn upload_icon(
             };
 
             if image.format().is_none() {
-                return HttpResponse::Ok().body("Provided file is not png");
+                return HttpResponse::Accepted().body("Provided file is not png");
             }
-            db_connection::add_icon_to_project(data.as_ref(), project_id, &db_pool).await;
+            let result = db_connection::add_icon_to_project(data.as_ref(), project_id, &db_pool).await;
+
+            match result {
+                Ok(_) => HttpResponse::Accepted().body(format!("Icon uploaded to project with id {}", project_id)),
+                Err(e) => HttpResponse::Ok().body(e.to_string()),
+            }
         }
     }
-    HttpResponse::Ok().body("Hello world!")
 }
 
 #[tokio::main]
@@ -123,6 +124,7 @@ async fn main() -> anyhow::Result<()> {
             .service(add_project)
             .service(get_projects)
             .service(modify_project)
+            .service(delete_project)
             .service(upload_icon)
             .wrap(Logger::new("%a %{User-Agent}i"))
     })

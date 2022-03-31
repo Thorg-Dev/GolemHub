@@ -1,4 +1,5 @@
 #[derive(sqlx::FromRow, serde::Serialize)]
+#[serde(deny_unknown_fields)]
 pub struct ProjectResponse {
     pub id: i32,
     pub name: String,
@@ -9,6 +10,7 @@ pub struct ProjectResponse {
 }
 
 #[derive(serde::Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct ProjectCreationRequest {
     pub short_name: String,
     pub homepage: String,
@@ -22,6 +24,7 @@ fn default_limit() -> u32 {
 }
 
 #[derive(serde::Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct ProjectGetQuery {
     #[serde(default)]
     pub offset: u32,
@@ -30,6 +33,7 @@ pub struct ProjectGetQuery {
 }
 
 #[derive(serde::Deserialize, Debug)]
+#[serde(deny_unknown_fields)]
 pub struct ProjectModificationRequest {
     pub id: u32,
     pub name: Option<String>,

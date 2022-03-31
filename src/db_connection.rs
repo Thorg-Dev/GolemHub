@@ -1,16 +1,15 @@
 use crate::data_types::ProjectResponse;
 use crate::{ProjectCreationRequest, ProjectModificationRequest};
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use log::info;
 use sqlx::postgres::PgPoolOptions;
 use sqlx::{Pool, Postgres};
 use std::env;
-use std::io::Bytes;
 
 pub async fn create_db_connection() -> Result<Pool<Postgres>> {
-    let username = env::var("DB_USER").unwrap_or(String::from("postgres"));
-    let password = env::var("DB_PASS").unwrap_or(String::from("postgres"));
-    let db_addr = env::var("DB_ADDR").unwrap_or(String::from("db"));
+    let username = env::var("DB_USER").unwrap_or_else(|_| String::from("postgres"));
+    let password = env::var("DB_PASS").unwrap_or_else(|_| String::from("postgres"));
+    let db_addr = env::var("DB_ADDR").unwrap_or_else(|_| String::from("db"));
 
     let url = format!(
         "postgres://{user}:{pass}@{addr}/GolemHub",
@@ -72,7 +71,7 @@ pub async fn add_icon_to_project(
     project_id: u32,
     pool: &Pool<Postgres>,
 ) -> Result<()> {
-    sqlx::query(
+    let query_result = sqlx::query(
         r#"
         UPDATE public."Projects"
         SET
@@ -86,11 +85,15 @@ pub async fn add_icon_to_project(
     .execute(pool)
     .await?;
 
+    if query_result.rows_affected() == 0 {
+        return Err(anyhow!("Failed to find project to alter"));
+    }
+
     Ok(())
 }
 
 pub async fn delete_project(request: u32, pool: &Pool<Postgres>) -> Result<()> {
-    sqlx::query(
+    let query_result = sqlx::query(
         r#"DELETE FROM public."Projects"(
         WHERE
             id=$1;"#,
@@ -98,6 +101,10 @@ pub async fn delete_project(request: u32, pool: &Pool<Postgres>) -> Result<()> {
     .bind(request)
     .execute(pool)
     .await?;
+
+    if query_result.rows_affected() == 0 {
+        return Err(anyhow!("Failed to remove anything"));
+    }
 
     Ok(())
 }
@@ -209,7 +216,7 @@ pub async fn modify_project(
     }
 
     for query_result in queries {
-        query_result.await;
+        query_result.await?;
     }
 
     Ok(())
