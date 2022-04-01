@@ -1,0 +1,21 @@
+services:
+  db:
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready" ]
+      interval: 1s
+      timeout: 5s
+      retries: 5
+    environment:
+        POSTGRES_PASSWORD: postgres
+        POSTGRES_USER: postgres
+    user: postgres
+    ports:
+      - 8008:5432
+    build:
+      context: .
+      dockerfile: dev_db/dockerfile_with_dummy_data
+  adminer:
+    extends:
+      file: common-services.yml
+      service: adminer
+  service:

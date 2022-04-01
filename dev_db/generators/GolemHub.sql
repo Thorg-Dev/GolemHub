@@ -5,7 +5,7 @@
 -- Dumped from database version 14.2
 -- Dumped by pg_dump version 14.2
 
--- Started on 2022-03-25 14:26:00
+-- Started on 2022-04-01 11:28:10
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -47,20 +47,20 @@ SET default_table_access_method = heap;
 
 --
 -- TOC entry 210 (class 1259 OID 24584)
--- Name: Projects; Type: TABLE; Schema: public; Owner: postgres
+-- Name: projects; Type: TABLE; Schema: public; Owner: postgres
 --
 
-CREATE TABLE public."Projects" (
+CREATE TABLE public.projects (
     id integer NOT NULL,
     name character varying,
-    icon character varying,
     homepage character varying,
     developer character varying,
-    images character varying[]
+    images character varying[],
+    icon bytea
 );
 
 
-ALTER TABLE public."Projects" OWNER TO postgres;
+ALTER TABLE public.projects OWNER TO postgres;
 
 --
 -- TOC entry 209 (class 1259 OID 24583)
@@ -84,25 +84,23 @@ ALTER TABLE public."Projects_id_seq" OWNER TO postgres;
 -- Name: Projects_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
 
-ALTER SEQUENCE public."Projects_id_seq" OWNED BY public."Projects".id;
+ALTER SEQUENCE public."Projects_id_seq" OWNED BY public.projects.id;
 
 
 --
 -- TOC entry 3164 (class 2604 OID 24587)
--- Name: Projects id; Type: DEFAULT; Schema: public; Owner: postgres
+-- Name: projects id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public."Projects" ALTER COLUMN id SET DEFAULT nextval('public."Projects_id_seq"'::regclass);
+ALTER TABLE ONLY public.projects ALTER COLUMN id SET DEFAULT nextval('public."Projects_id_seq"'::regclass);
 
 
 --
 -- TOC entry 3307 (class 0 OID 24584)
 -- Dependencies: 210
--- Data for Name: Projects; Type: TABLE DATA; Schema: public; Owner: postgres
+-- Data for Name: projects; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-INSERT INTO public."Projects" (id, name, icon, homepage, developer, images) VALUES (1, 'first project', 'icon link', 'homepage', 'dev', '{"first image","second image"}');
-INSERT INTO public."Projects" (id, name, icon, homepage, developer, images) VALUES (2, 'first project', 'icon link', 'homepage', 'dev', '{"first image","second image"}');
 
 
 --
@@ -111,19 +109,19 @@ INSERT INTO public."Projects" (id, name, icon, homepage, developer, images) VALU
 -- Name: Projects_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public."Projects_id_seq"', 2, true);
+SELECT pg_catalog.setval('public."Projects_id_seq"', 5, true);
 
 
 --
 -- TOC entry 3166 (class 2606 OID 24591)
--- Name: Projects Projects_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: projects Projects_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public."Projects"
+ALTER TABLE ONLY public.projects
     ADD CONSTRAINT "Projects_pkey" PRIMARY KEY (id);
 
 
--- Completed on 2022-03-25 14:26:00
+-- Completed on 2022-04-01 11:28:11
 
 --
 -- PostgreSQL database dump complete

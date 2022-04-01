@@ -12,8 +12,8 @@ use sqlx::{Pool, Postgres};
 use std::io::Cursor;
 
 #[get("/meta/hash/{hash}")]
-async fn get_image(db_pool: web::Data<Pool<Postgres>>, path: web::Path<u32>) -> impl Responder {
-    let project_response = db_connection::retrieve_image_data(path.into_inner(), &db_pool).await;
+async fn get_image(db_pool: web::Data<Pool<Postgres>>, path: web::Path<String>) -> impl Responder {
+    let project_response = db_connection::retrieve_project_data_by_image(path.into_inner().to_lowercase(), &db_pool).await;
 
     if project_response.is_err() {
         return HttpResponse::Accepted().body("Image not found");
@@ -132,7 +132,7 @@ async fn main() -> anyhow::Result<()> {
             .wrap(Logger::new("%a %{User-Agent}i"))
     })
     .bind(("127.0.0.1", 8080))
-    .expect("asd")
+    .expect("Failed to start server")
     .run()
     .await?;
 

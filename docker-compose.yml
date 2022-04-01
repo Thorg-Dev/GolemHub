@@ -4,7 +4,7 @@ services:
     command:
       cargo run
     ports:
-      - "5050:8080"
+      - 5050:8080
     depends_on:
       db:
           condition: service_healthy
@@ -25,4 +25,4 @@ services:
     ports:
       - 8182:8080
     depends_on:
-      - "db"
+      - db
