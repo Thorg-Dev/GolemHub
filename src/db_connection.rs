@@ -6,7 +6,7 @@ use sqlx::postgres::PgPoolOptions;
 use sqlx::{Pool, Postgres};
 use std::env;
 
-pub async fn create_db_connection() -> Result<Pool<Postgres>> {
+pub async fn create_db_connection(max_connections : u32) -> Result<Pool<Postgres>> {
     let username = env::var("DB_USER").unwrap_or_else(|_| String::from("postgres"));
     let password = env::var("DB_PASS").unwrap_or_else(|_| String::from("postgres"));
     let db_addr = env::var("DB_ADDR").unwrap_or_else(|_| String::from("db"));
@@ -21,7 +21,7 @@ pub async fn create_db_connection() -> Result<Pool<Postgres>> {
     info!("connecting to db using url {}", url);
 
     let pool = PgPoolOptions::new()
-        .max_connections(5)
+        .max_connections(max_connections)
         .connect_lazy(url.as_str())?;
 
     Ok(pool)
@@ -228,7 +228,10 @@ pub async fn modify_project(
     Ok(())
 }
 
-pub async fn retrieve_project_data_by_image(id: String, pool: &Pool<Postgres>) -> Result<ProjectResponse> {
+pub async fn retrieve_project_data_by_image(
+    id: String,
+    pool: &Pool<Postgres>,
+) -> Result<ProjectResponse> {
     let image_data = sqlx::query_as::<_, ProjectResponse>(
         "SELECT *
 	    FROM public.projects AS projects

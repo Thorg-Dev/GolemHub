@@ -1,9 +1,8 @@
 FROM rust
-WORKDIR container_dir/
-RUN echo "fn main() {}" > dummy.rs
-COPY Cargo.toml .
-RUN sed -i 's#src/main.rs#dummy.rs#' Cargo.toml
-RUN cargo build
-RUN sed -i 's#dummy.rs#src/main.rs#' Cargo.toml
-COPY . .
+RUN cargo install cargo-build-deps
+RUN cd /tmp && USER=root cargo new --bin PROJECT_NAME
+WORKDIR /tmp/PROJECT_NAME
+COPY Cargo.toml Cargo.lock ./
+RUN cargo build-deps
+COPY src /tmp/PROJECT_NAME/src
 RUN cargo build

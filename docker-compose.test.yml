@@ -3,9 +3,9 @@ services:
   service:
     build: .
     command:
-      cargo run
+      cargo test
     ports:
-      - 8000:8080
+      - "8000:8080"
     depends_on:
       db:
         condition: service_healthy
@@ -27,6 +27,6 @@ services:
     image: adminer
     restart: always
     ports:
-      - 8182:8080
+      - "8182:8080"
     depends_on:
       - db
