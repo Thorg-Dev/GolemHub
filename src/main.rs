@@ -148,9 +148,9 @@ async fn main() -> anyhow::Result<()> {
 //WORKS ONLY VIA docker-compose.test.yml
 #[cfg(test)]
 mod tests {
-    use actix_web::{test, App};
-    use actix_web::http::StatusCode;
     use crate::db_connection::create_db_connection;
+    use actix_web::http::StatusCode;
+    use actix_web::{test, App};
 
     use super::*;
 
@@ -158,29 +158,25 @@ mod tests {
     async fn test_index_get() {
         env_logger::init_from_env(env_logger::Env::new().default_filter_or("debug"));
 
-        let pool = create_db_connection(1).await.expect("failed to create pool");
+        let pool = create_db_connection(1)
+            .await
+            .expect("failed to create pool");
 
         sqlx::query("BEGIN")
             .execute(&pool)
             .await
             .expect("BEGIN failed");
 
-        let app = test::init_service(App::new()
-            .app_data(web::Data::new(pool.clone()))
-            .service(get_projects)
-            .wrap(Logger::new("%a %{User-Agent}i")))
-            .await;
+        let app = test::init_service(
+            App::new()
+                .app_data(web::Data::new(pool.clone()))
+                .service(get_projects)
+                .wrap(Logger::new("%a %{User-Agent}i")),
+        )
+        .await;
         let req = test::TestRequest::get().uri("/api/projects").to_request();
         let resp = test::call_service(&app, req).await;
 
         assert_eq!(resp.status(), StatusCode::OK);
     }
-
-    // #[actix_web::test]
-    // async fn test_index_post() {
-    //     let app = test::init_service(App::new().route("/", web::get().to(get_image))).await;
-    //     let req = test::TestRequest::post().uri("/").to_request();
-    //     let resp = test::call_service(&app, req).await;
-    //     assert!(resp.status().is_client_error());
-    // }
 }

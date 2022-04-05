@@ -6,7 +6,11 @@ use sqlx::postgres::PgPoolOptions;
 use sqlx::{Pool, Postgres};
 use std::env;
 
-pub async fn create_db_connection(max_connections : u32) -> Result<Pool<Postgres>> {
+use sqlx::migrate::Migrator;
+
+static MIGRATOR: Migrator = sqlx::migrate!();
+
+pub async fn create_db_connection(max_connections: u32) -> Result<Pool<Postgres>> {
     let username = env::var("DB_USER").unwrap_or_else(|_| String::from("postgres"));
     let password = env::var("DB_PASS").unwrap_or_else(|_| String::from("postgres"));
     let db_addr = env::var("DB_ADDR").unwrap_or_else(|_| String::from("db"));
@@ -23,6 +27,8 @@ pub async fn create_db_connection(max_connections : u32) -> Result<Pool<Postgres
     let pool = PgPoolOptions::new()
         .max_connections(max_connections)
         .connect_lazy(url.as_str())?;
+
+    MIGRATOR.run(&pool).await?;
 
     Ok(pool)
 }

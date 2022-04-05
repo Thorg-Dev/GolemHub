@@ -5,7 +5,7 @@
 -- Dumped from database version 14.2
 -- Dumped by pg_dump version 14.2
 
--- Started on 2022-04-01 11:28:10
+-- Started on 2022-04-05 15:43:28
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -23,7 +23,7 @@ SET row_security = off;
 -- Name: GolemHub; Type: DATABASE; Schema: -; Owner: postgres
 --
 
-CREATE DATABASE "GolemHub" WITH TEMPLATE = template0 ENCODING = 'UTF8' LC_COLLATE 'en_US.utf8' LC_CTYPE 'en_US.utf8';
+CREATE DATABASE "GolemHub" WITH TEMPLATE = template0 ENCODING = 'UTF8' LOCALE = 'English_United States.1252';
 
 
 ALTER DATABASE "GolemHub" OWNER TO postgres;
@@ -101,6 +101,8 @@ ALTER TABLE ONLY public.projects ALTER COLUMN id SET DEFAULT nextval('public."Pr
 -- Data for Name: projects; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
+COPY public.projects (id, name, homepage, developer, images, icon) FROM stdin;
+\.
 
 
 --
@@ -121,7 +123,7 @@ ALTER TABLE ONLY public.projects
     ADD CONSTRAINT "Projects_pkey" PRIMARY KEY (id);
 
 
--- Completed on 2022-04-01 11:28:11
+-- Completed on 2022-04-05 15:43:28
 
 --
 -- PostgreSQL database dump complete
