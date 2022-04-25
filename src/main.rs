@@ -1,56 +1,53 @@
 mod data_types;
 mod db_connection;
 
-use crate::data_types::{ProjectCreationRequest, ProjectGetQuery, ProjectModificationRequest};
+use crate::data_types::{
+    ProjectCreationRequest, ProjectGetQuery, ProjectModificationRequest, ProjectResponse,
+};
 use actix_multipart::Multipart;
 use actix_web::middleware::Logger;
-use actix_web::web::{Bytes, Query};
+use actix_web::web::{Bytes, Json, Query};
 use actix_web::{delete, get, patch, post, web, App, HttpResponse, HttpServer, Responder};
 use futures_util::{StreamExt, TryStreamExt};
 use image::io::Reader as ImageReader;
 use sqlx::{Pool, Postgres};
 use std::io::Cursor;
 
-//#[sqlx_macros::test]
 #[get("/meta/hash/{hash}")]
-async fn get_image(db_pool: web::Data<Pool<Postgres>>, path: web::Path<String>) -> impl Responder {
+async fn get_image(
+    db_pool: web::Data<Pool<Postgres>>,
+    path: web::Path<String>,
+) -> actix_web::Result<Json<ProjectResponse>> {
     let project_response =
-        db_connection::retrieve_project_data_by_image(path.into_inner().to_lowercase(), &db_pool)
-            .await;
+        db_connection::retrieve_project_data_by_hash(path.into_inner().to_lowercase(), &db_pool)
+            .await
+            .map_err(|e| actix_web::error::ErrorNotFound(e))?;
 
-    if project_response.is_err() {
-        return HttpResponse::Accepted().body("Image not found");
-    }
-
-    HttpResponse::Ok().json(project_response.unwrap())
+    Ok(web::Json(project_response))
 }
 
 #[get("/api/projects")]
 async fn get_projects(
     db_pool: web::Data<Pool<Postgres>>,
     info: Query<ProjectGetQuery>,
-) -> impl Responder {
-    let found_projects = db_connection::get_projects(info.offset, info.limit, &db_pool).await;
+) -> actix_web::Result<Json<Vec<ProjectResponse>>> {
+    let found_projects = db_connection::get_projects(info.offset, info.limit, &db_pool)
+        .await
+        .map_err(|e| actix_web::error::ErrorNotFound(e))?;
 
-    match found_projects {
-        Err(e) => HttpResponse::Accepted().body(e.to_string()),
-        Ok(project_val) => HttpResponse::Ok().json(project_val),
-    }
+    Ok(Json(found_projects))
 }
 
 #[post("api/projects")]
 async fn add_project(
     db_pool: web::Data<Pool<Postgres>>,
     request: web::Json<ProjectCreationRequest>,
-) -> impl Responder {
-    //TODO validate request?
+) -> actix_web::Result<Json<ProjectResponse>> {
+    let added_project = db_connection::add_project(request.into_inner(), &db_pool)
+        .await
+        .map_err(|e| actix_web::error::ErrorInternalServerError(e))?;
 
-    let added_project = db_connection::add_project(request.into_inner(), &db_pool).await;
-
-    match added_project {
-        Err(e) => HttpResponse::Accepted().body(e.to_string()),
-        Ok(project_val) => HttpResponse::Ok().body(serde_json::to_string(&project_val).unwrap()),
-    }
+    Ok(Json(added_project))
 }
 
 #[patch("api/projects")]
@@ -68,7 +65,7 @@ async fn modify_project(
 
 #[delete("api/projects/{id}")]
 async fn delete_project(
-    path: web::Path<u32>,
+    path: web::Path<i32>,
     db_pool: web::Data<Pool<Postgres>>,
 ) -> impl Responder {
     let result = db_connection::delete_project(path.into_inner(), &db_pool).await;
@@ -79,9 +76,21 @@ async fn delete_project(
     }
 }
 
+#[get("api/icon/{hash}")]
+async fn get_icon_by_hash(
+    path: web::Path<String>,
+    db_pool: web::Data<Pool<Postgres>>,
+) -> actix_web::Result<actix_web::web::Bytes> {
+    let image_bytes_result = db_connection::retrieve_image_by_hash(path.into_inner(), &db_pool)
+        .await
+        .map_err(|e| actix_web::error::ErrorNotFound(e))?;
+
+    Ok(Bytes::from(image_bytes_result.icon))
+}
+
 #[post("api/icon/{id}")]
 async fn upload_icon(
-    path: web::Path<u32>,
+    path: web::Path<i32>,
     mut payload: Multipart,
     db_pool: web::Data<Pool<Postgres>>,
 ) -> impl Responder {
@@ -91,8 +100,7 @@ async fn upload_icon(
         // Field in turn is stream of *Bytes* object
         while let Some(chunk) = field.next().await {
             let data = chunk.unwrap();
-            let data2 = Bytes::copy_from_slice(data.as_ref());
-            let image_reader = ImageReader::new(Cursor::new(data2));
+            let image_reader = ImageReader::new(Cursor::new(&data));
 
             let potential_image = image_reader.with_guessed_format();
 
@@ -104,19 +112,18 @@ async fn upload_icon(
             if image.format().is_none() {
                 return HttpResponse::Accepted().body("Provided file is not png");
             }
-            let result =
-                db_connection::add_icon_to_project(data.as_ref(), project_id, &db_pool).await;
+            let result = db_connection::add_icon_to_project(&data, project_id, &db_pool).await;
 
             match result {
                 Ok(_) => {
                     return HttpResponse::Ok()
                         .body(format!("Icon uploaded to project with id {}", project_id))
                 }
-                Err(e) => return HttpResponse::Accepted().body(e.to_string()),
+                Err(e) => return HttpResponse::InternalServerError().body(e.to_string()),
             }
         }
     }
-    HttpResponse::Accepted().body("Failed to upload icon")
+    HttpResponse::BadRequest().body("Failed to upload icon")
 }
 
 #[tokio::main]
@@ -130,6 +137,7 @@ async fn main() -> anyhow::Result<()> {
             .app_data(web::Data::new(db.clone()))
             .service(get_image)
             .service(get_projects)
+            .service(get_icon_by_hash)
             // TODO reenable non-get services (requires authorization layer)
             // .service(add_project)
             // .service(modify_project)

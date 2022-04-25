@@ -3,10 +3,15 @@
 pub struct ProjectResponse {
     pub id: i32,
     pub name: String,
-    pub icon: String,
     pub homepage: String,
     pub developer: String,
     pub images: Vec<String>,
+}
+
+#[derive(sqlx::FromRow, serde::Serialize)]
+#[serde(deny_unknown_fields)]
+pub struct Image {
+    pub icon: Vec<u8>,
 }
 
 #[derive(serde::Deserialize)]
@@ -14,12 +19,11 @@ pub struct ProjectResponse {
 pub struct ProjectCreationRequest {
     pub short_name: String,
     pub homepage: String,
-    pub icon: String,
     pub developer: String,
     pub images: Vec<String>,
 }
 
-fn default_limit() -> u32 {
+fn default_limit() -> i32 {
     10
 }
 
@@ -27,15 +31,15 @@ fn default_limit() -> u32 {
 #[serde(deny_unknown_fields)]
 pub struct ProjectGetQuery {
     #[serde(default)]
-    pub offset: u32,
+    pub offset: i32,
     #[serde(default = "default_limit")]
-    pub limit: u32,
+    pub limit: i32,
 }
 
 #[derive(serde::Deserialize, Debug)]
 #[serde(deny_unknown_fields)]
 pub struct ProjectModificationRequest {
-    pub id: u32,
+    pub id: i32,
     pub name: Option<String>,
     pub icon: Option<String>,
     pub homepage: Option<String>,

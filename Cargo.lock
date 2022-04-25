@@ -262,6 +262,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "atoi"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d7c57d12312ff59c811c0643f4d80830505833c9ffaebd193d819392b265be8e"
+dependencies = [
+ "num-traits",
+]
+
+[[package]]
 name = "atty"
 version = "0.2.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -588,6 +597,7 @@ checksum = "f2fb860ca6fafa5552fb6d0e816a69c8e49f0908bf524e30a90d97c85892d506"
 dependencies = [
  "block-buffer 0.10.2",
  "crypto-common",
+ "subtle",
 ]
 
 [[package]]
@@ -643,6 +653,12 @@ dependencies = [
  "regex",
  "termcolor",
 ]
+
+[[package]]
+name = "event-listener"
+version = "2.5.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "77f3309417938f28bf8228fcff79a4a37103981e3e186d2ccd19c74b38f4eb71"
 
 [[package]]
 name = "exr"
@@ -854,7 +870,7 @@ dependencies = [
  "log",
  "serde",
  "serde_json",
- "sqlx",
+ "sqlx 0.5.12",
  "sqlx-database-tester",
  "tokio",
 ]
@@ -894,12 +910,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "hashbrown"
+version = "0.12.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8c21d40587b92fa6a6c6e3c1bdbf87d75511db5672f9c93175574b3a00df1758"
+dependencies = [
+ "ahash",
+]
+
+[[package]]
 name = "hashlink"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7249a3129cbc1ffccd74857f81464a323a152173cdb134e0fd81bc803b29facf"
 dependencies = [
- "hashbrown",
+ "hashbrown 0.11.2",
+]
+
+[[package]]
+name = "hashlink"
+version = "0.8.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d452c155cb93fecdfb02a73dd57b5d8e442c2063bd7aac72f1bc5e4263a43086"
+dependencies = [
+ "hashbrown 0.12.0",
 ]
 
 [[package]]
@@ -907,6 +941,15 @@ name = "heck"
 version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6d621efb26863f0e9924c6ac577e8275e5e6b77455db64ffa6c65c904e9e132c"
+dependencies = [
+ "unicode-segmentation",
+]
+
+[[package]]
+name = "heck"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2540771e65fc8cb83cd6e8a237f70c319bd5c29f78ed1084ba5d50eeac86f7f9"
 dependencies = [
  "unicode-segmentation",
 ]
@@ -927,6 +970,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
 
 [[package]]
+name = "hkdf"
+version = "0.12.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "791a029f6b9fc27657f6f188ec6e5e43f6911f6f878e0dc5501396e09809d437"
+dependencies = [
+ "hmac 0.12.1",
+]
+
+[[package]]
 name = "hmac"
 version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -934,6 +986,15 @@ checksum = "2a2a2320eb7ec0ebe8da8f744d7812d9fc4cb4d09344ac01898dbcb6a20ae69b"
 dependencies = [
  "crypto-mac",
  "digest 0.9.0",
+]
+
+[[package]]
+name = "hmac"
+version = "0.12.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6c49c37c09c17a53d937dfbb742eb3a961d65a994e6bcdcf37e7399d0cc8ab5e"
+dependencies = [
+ "digest 0.10.3",
 ]
 
 [[package]]
@@ -1009,7 +1070,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "282a6247722caba404c065016bbfa522806e51714c34f5dfc3e4a3a46fcb4223"
 dependencies = [
  "autocfg",
- "hashbrown",
+ "hashbrown 0.11.2",
 ]
 
 [[package]]
@@ -1153,6 +1214,15 @@ dependencies = [
  "block-buffer 0.9.0",
  "digest 0.9.0",
  "opaque-debug",
+]
+
+[[package]]
+name = "md-5"
+version = "0.10.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "658646b21e0b72f7866c7038ab086d3d5e1cd6271f060fd37defb241949d0582"
+dependencies = [
+ "digest 0.10.3",
 ]
 
 [[package]]
@@ -1577,8 +1647,29 @@ dependencies = [
  "base64",
  "log",
  "ring",
- "sct",
- "webpki",
+ "sct 0.6.1",
+ "webpki 0.21.4",
+]
+
+[[package]]
+name = "rustls"
+version = "0.20.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4fbfeb8d0ddb84706bc597a5574ab8912817c52a397f819e5b614e2265206921"
+dependencies = [
+ "log",
+ "ring",
+ "sct 0.7.0",
+ "webpki 0.22.0",
+]
+
+[[package]]
+name = "rustls-pemfile"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e7522c9de787ff061458fe9a829dc790a3f5b22dc571694fc5883f448b94d9a9"
+dependencies = [
+ "base64",
 ]
 
 [[package]]
@@ -1604,6 +1695,16 @@ name = "sct"
 version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b362b83898e0e69f38515b82ee15aa80636befe47c3b6d3d89a911e78fc228ce"
+dependencies = [
+ "ring",
+ "untrusted",
+]
+
+[[package]]
+name = "sct"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d53dcdb7c9f8158937a7981b48accfd39a43af418591a5d008c7b22b5e1b7ca4"
 dependencies = [
  "ring",
  "untrusted",
@@ -1696,6 +1797,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "sha2"
+version = "0.10.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "55deaec60f81eefe3cce0dc50bda92d6d8e88f2a27df7c5033b42afeb1ed2676"
+dependencies = [
+ "cfg-if",
+ "cpufeatures",
+ "digest 0.10.3",
+]
+
+[[package]]
 name = "signal-hook-registry"
 version = "1.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1758,8 +1870,17 @@ version = "0.5.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fc15591eb44ffb5816a4a70a7efd5dd87bfd3aa84c4c200401c4396140525826"
 dependencies = [
- "sqlx-core",
- "sqlx-macros",
+ "sqlx-core 0.5.11",
+ "sqlx-macros 0.5.11",
+]
+
+[[package]]
+name = "sqlx"
+version = "0.5.12"
+source = "git+https://github.com/launchbadge/sqlx#826e63fc11fc43ce92099b6844d8a9155bf38356"
+dependencies = [
+ "sqlx-core 0.5.12",
+ "sqlx-macros 0.5.12",
 ]
 
 [[package]]
@@ -1769,7 +1890,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "195183bf6ff8328bb82c0511a83faf60aacf75840103388851db61d7a9854ae3"
 dependencies = [
  "ahash",
- "atoi",
+ "atoi 0.4.0",
  "base64",
  "bitflags",
  "byteorder",
@@ -1782,33 +1903,84 @@ dependencies = [
  "futures-core",
  "futures-intrusive",
  "futures-util",
- "hashlink",
+ "hashlink 0.7.0",
  "hex",
- "hmac",
+ "hmac 0.11.0",
  "indexmap",
  "itoa",
  "libc",
  "log",
- "md-5",
+ "md-5 0.9.1",
  "memchr",
  "once_cell",
  "paste",
  "percent-encoding",
  "rand",
- "rustls",
+ "rustls 0.19.1",
  "serde",
  "serde_json",
  "sha-1 0.9.8",
- "sha2",
+ "sha2 0.9.9",
  "smallvec",
  "sqlformat",
- "sqlx-rt",
+ "sqlx-rt 0.5.11",
  "stringprep",
  "thiserror",
  "tokio-stream",
  "url",
- "webpki",
- "webpki-roots",
+ "webpki 0.21.4",
+ "webpki-roots 0.21.1",
+ "whoami",
+]
+
+[[package]]
+name = "sqlx-core"
+version = "0.5.12"
+source = "git+https://github.com/launchbadge/sqlx#826e63fc11fc43ce92099b6844d8a9155bf38356"
+dependencies = [
+ "ahash",
+ "atoi 1.0.0",
+ "base64",
+ "bitflags",
+ "byteorder",
+ "bytes",
+ "crc",
+ "crossbeam-queue",
+ "dirs",
+ "either",
+ "event-listener",
+ "futures-channel",
+ "futures-core",
+ "futures-intrusive",
+ "futures-util",
+ "hashlink 0.8.0",
+ "hex",
+ "hkdf",
+ "hmac 0.12.1",
+ "indexmap",
+ "itoa",
+ "libc",
+ "log",
+ "md-5 0.10.1",
+ "memchr",
+ "once_cell",
+ "paste",
+ "percent-encoding",
+ "rand",
+ "rustls 0.20.4",
+ "rustls-pemfile",
+ "serde",
+ "serde_json",
+ "sha-1 0.10.0",
+ "sha2 0.10.2",
+ "smallvec",
+ "sqlformat",
+ "sqlx-rt 0.5.12",
+ "stringprep",
+ "thiserror",
+ "tokio-stream",
+ "url",
+ "webpki-roots 0.22.3",
  "whoami",
 ]
 
@@ -1820,7 +1992,7 @@ checksum = "9178cbeb433bc69fc31dcc2af7b8dbfb7a3a91327dc8738a9181b80932c11d4a"
 dependencies = [
  "dotenv",
  "http",
- "sqlx",
+ "sqlx 0.5.11",
  "sqlx-database-tester-macros",
  "uuid",
 ]
@@ -1845,13 +2017,31 @@ checksum = "eee35713129561f5e55c554bba1c378e2a7e67f81257b7311183de98c50e6f94"
 dependencies = [
  "dotenv",
  "either",
- "heck",
+ "heck 0.3.3",
  "once_cell",
  "proc-macro2",
  "quote",
- "sha2",
- "sqlx-core",
- "sqlx-rt",
+ "sha2 0.9.9",
+ "sqlx-core 0.5.11",
+ "sqlx-rt 0.5.11",
+ "syn",
+ "url",
+]
+
+[[package]]
+name = "sqlx-macros"
+version = "0.5.12"
+source = "git+https://github.com/launchbadge/sqlx#826e63fc11fc43ce92099b6844d8a9155bf38356"
+dependencies = [
+ "dotenv",
+ "either",
+ "heck 0.4.0",
+ "once_cell",
+ "proc-macro2",
+ "quote",
+ "sha2 0.10.2",
+ "sqlx-core 0.5.12",
+ "sqlx-rt 0.5.12",
  "syn",
  "url",
 ]
@@ -1864,7 +2054,17 @@ checksum = "b555e70fbbf84e269ec3858b7a6515bcfe7a166a7cc9c636dd6efd20431678b6"
 dependencies = [
  "once_cell",
  "tokio",
- "tokio-rustls",
+ "tokio-rustls 0.22.0",
+]
+
+[[package]]
+name = "sqlx-rt"
+version = "0.5.12"
+source = "git+https://github.com/launchbadge/sqlx#826e63fc11fc43ce92099b6844d8a9155bf38356"
+dependencies = [
+ "once_cell",
+ "tokio",
+ "tokio-rustls 0.23.3",
 ]
 
 [[package]]
@@ -2019,9 +2219,20 @@ version = "0.22.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bc6844de72e57df1980054b38be3a9f4702aba4858be64dd700181a8a6d0e1b6"
 dependencies = [
- "rustls",
+ "rustls 0.19.1",
  "tokio",
- "webpki",
+ "webpki 0.21.4",
+]
+
+[[package]]
+name = "tokio-rustls"
+version = "0.23.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4151fda0cf2798550ad0b34bcfc9b9dcc2a9d2471c895c68f3a8818e54f2389e"
+dependencies = [
+ "rustls 0.20.4",
+ "tokio",
+ "webpki 0.22.0",
 ]
 
 [[package]]
@@ -2259,12 +2470,31 @@ dependencies = [
 ]
 
 [[package]]
+name = "webpki"
+version = "0.22.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f095d78192e208183081cc07bc5515ef55216397af48b873e5edcd72637fa1bd"
+dependencies = [
+ "ring",
+ "untrusted",
+]
+
+[[package]]
 name = "webpki-roots"
 version = "0.21.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "aabe153544e473b775453675851ecc86863d2a81d786d741f6b76778f2a48940"
 dependencies = [
- "webpki",
+ "webpki 0.21.4",
+]
+
+[[package]]
+name = "webpki-roots"
+version = "0.22.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "44d8de8415c823c8abd270ad483c6feeac771fad964890779f9a8cb24fbbc1bf"
+dependencies = [
+ "webpki 0.22.0",
 ]
 
 [[package]]

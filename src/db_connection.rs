@@ -1,8 +1,9 @@
-use crate::data_types::ProjectResponse;
+use crate::data_types::{Image, ProjectResponse};
 use crate::{ProjectCreationRequest, ProjectModificationRequest};
 use anyhow::{anyhow, Result};
 use log::info;
 use sqlx::postgres::PgPoolOptions;
+use sqlx::QueryBuilder;
 use sqlx::{Pool, Postgres};
 use std::env;
 
@@ -34,8 +35,8 @@ pub async fn create_db_connection(max_connections: u32) -> Result<Pool<Postgres>
 }
 
 pub async fn get_projects(
-    offset: u32,
-    limit: u32,
+    offset: i32,
+    limit: i32,
     pool: &Pool<Postgres>,
 ) -> Result<Vec<ProjectResponse>> {
     let projects = sqlx::query_as::<_, ProjectResponse>(
@@ -57,12 +58,11 @@ pub async fn add_project(
 ) -> Result<ProjectResponse> {
     let project_data = sqlx::query_as::<_, ProjectResponse>(
         r#"INSERT INTO public.projects(
-        name, icon, homepage, developer, images)
-        VALUES ($1, $2, $3, $4, $5)
+        name, homepage, developer, images)
+        VALUES ($1, $2, $3, $4)
         RETURNING *;"#,
     )
     .bind(creation_request.short_name)
-    .bind(creation_request.icon)
     .bind(creation_request.homepage)
     .bind(creation_request.developer)
     .bind(
@@ -80,7 +80,7 @@ pub async fn add_project(
 
 pub async fn add_icon_to_project(
     png_bytes: &[u8],
-    project_id: u32,
+    project_id: i32,
     pool: &Pool<Postgres>,
 ) -> Result<()> {
     let query_result = sqlx::query(
@@ -104,7 +104,7 @@ pub async fn add_icon_to_project(
     Ok(())
 }
 
-pub async fn delete_project(request: u32, pool: &Pool<Postgres>) -> Result<()> {
+pub async fn delete_project(request: i32, pool: &Pool<Postgres>) -> Result<()> {
     let query_result = sqlx::query(
         r#"DELETE FROM public.projects(
         WHERE
@@ -125,121 +125,96 @@ pub async fn modify_project(
     request: ProjectModificationRequest,
     pool: &Pool<Postgres>,
 ) -> Result<()> {
-    let mut queries = Vec::new();
-
-    if request.name.is_some() {
-        let modify_query = sqlx::query(
-            r#"
-        UPDATE public.projects
-        SET
-            name = $1
-        WHERE
-            id = $2
-        "#,
-        )
-        .bind(request.name.unwrap())
-        .bind(request.id);
-
-        queries.push(modify_query.execute(pool));
+    if request.name.is_none()
+        && request.icon.is_none()
+        && request.add_image.is_none()
+        && request.del_image.is_none()
+        && request.developer.is_none()
+        && request.homepage.is_none()
+    {
+        return Ok(());
     }
 
-    if request.icon.is_some() {
-        let modify_query = sqlx::query(
-            r#"
-        UPDATE public.projects
-        SET
-            icon = $1
-        WHERE
-            id = $2
-        "#,
-        )
-        .bind(request.icon.unwrap())
-        .bind(request.id);
+    let mut query_builder: QueryBuilder<Postgres> = QueryBuilder::new("UPDATE public.projects \n");
 
-        queries.push(modify_query.execute(pool));
+    query_builder.push("SET\n");
+
+    if let Some(name) = request.name {
+        query_builder.push("\tname = ");
+        query_builder.push_bind(name);
+        query_builder.push("\n");
+
+        // let modify_query = sqlx::query(
+        //     r#"
+        // UPDATE public.projects
+        // SET
+        //     name = $1
+        // WHERE
+        //     id = $2
+        // "#,
+        // )
+        // .bind(req_name)
+        // .bind(request.id);
+        //
+        // queries.push(modify_query.execute(pool));
     }
 
-    if request.homepage.is_some() {
-        let modify_query = sqlx::query(
-            r#"
-        UPDATE public.projects
-        SET
-            homepage = $1
-        WHERE
-            id = $2
-        "#,
-        )
-        .bind(request.homepage.unwrap())
-        .bind(request.id);
-
-        queries.push(modify_query.execute(pool));
+    if let Some(request) = request.homepage {
+        query_builder.push("\thomepage = ");
+        query_builder.push_bind(request);
+        query_builder.push("\n");
     }
 
-    if request.developer.is_some() {
-        let modify_query = sqlx::query(
-            r#"
-        UPDATE public.projects
-        SET
-            developer = $1
-        WHERE
-            id = $2
-        "#,
-        )
-        .bind(request.developer.unwrap())
-        .bind(request.id);
-
-        queries.push(modify_query.execute(pool));
+    if let Some(developer) = request.developer {
+        query_builder.push("\tdeveloper = ");
+        query_builder.push_bind(developer);
+        query_builder.push("\n");
     }
 
-    if request.add_image.is_some() {
-        for image_hash in request.add_image.unwrap() {
-            let modify_query = sqlx::query(
-                r#"
-                    UPDATE public.projects
-                    SET
-                        images = array_append(images, $1)
-                    WHERE
-                        id = $2
-                    "#,
-            )
-            .bind(image_hash.to_lowercase())
-            .bind(request.id);
-
-            queries.push(modify_query.execute(pool));
+    if let Some(add_images) = request.add_image {
+        for image_hash in add_images {
+            query_builder.push("\timages = array_append(images, ");
+            query_builder.push_bind(image_hash);
+            query_builder.push(")\n");
         }
     }
 
-    if request.del_image.is_some() {
-        for image_hash in request.del_image.unwrap() {
-            let modify_query = sqlx::query(
-                r#"
-                    UPDATE public.projects
-                    SET
-                        images = array_remove(images, $1)
-                    WHERE
-                        id = $2
-                    "#,
-            )
-            .bind(image_hash.to_lowercase())
-            .bind(request.id);
-
-            queries.push(modify_query.execute(pool));
+    if let Some(del_images) = request.del_image {
+        for image_hash in del_images {
+            query_builder.push("\timages = array_remove(images, ");
+            query_builder.push_bind(image_hash);
+            query_builder.push(")\n");
         }
     }
 
-    for query_result in queries {
-        query_result.await?;
-    }
+    query_builder.push("WHERE id = ").push_bind(request.id);
+
+    let query = query_builder.build();
+
+    query.execute(pool).await?;
 
     Ok(())
 }
 
-pub async fn retrieve_project_data_by_image(
+pub async fn retrieve_image_by_hash(id: String, pool: &Pool<Postgres>) -> Result<Image> {
+    let image_data = sqlx::query_as::<_, Image>(
+        "SELECT icon
+	    FROM public.projects AS projects
+	    WHERE $1 = ANY(images)",
+    )
+    .bind(id)
+    .fetch_one(pool)
+    .await?;
+
+    Ok(image_data)
+}
+
+pub async fn retrieve_project_data_by_hash(
     id: String,
     pool: &Pool<Postgres>,
 ) -> Result<ProjectResponse> {
     let image_data = sqlx::query_as::<_, ProjectResponse>(
-        "SELECT *
+        "SELECT id, name, homepage, developer, images
 	    FROM public.projects AS projects
 	    WHERE $1 = ANY(images)",
     )
